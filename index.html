@@ -3,76 +3,217 @@
 <head>
   <meta charset="UTF-8">
   <title>LINE連携中</title>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    #status {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+
+    #debug {
+      white-space: pre-wrap;
+      text-align: left;
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 12px;
+    }
+
+    .friend-btn {
+      margin-top: 30px;
+    }
+  </style>
 </head>
+
 <body>
+
   <p id="status">LINE連携中...</p>
+
+  <div id="friendArea"></div>
+
   <pre id="debug"></pre>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
   <script>
-    const LIFF_ID = "2010275496-Wl17Ab7m";
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzuhpQhlQzcjoogmT8Ce7_TIDOWV0n-w-HTDlxH_3mizJlmPnF42kDdkVbscjomIC7k/exec";
-    const FRIEND_ADD_URL = "https://lin.ee/zxuWvAg";
+
+    // =========================
+    // 設定
+    // =========================
+
+    const LIFF_ID =
+      "2010275496-Wl17Ab7m";
+
+    const GAS_URL =
+      "https://script.google.com/macros/s/AKfycbzuhpQhlQzcjoogmT8Ce7_TIDOWV0n-w-HTDlxH_3mizJlmPnF42kDdkVbscjomIC7k/exec";
+
+    const FRIEND_ADD_URL =
+      "https://lin.ee/uXmNpaL";
+
+
+    // =========================
+    // ログ表示
+    // =========================
 
     function show(msg) {
       document.getElementById("status").innerText = msg;
-      document.getElementById("debug").innerText += msg + "\n";
+
+      document.getElementById("debug").innerText +=
+        msg + "\n";
     }
 
+
+    // =========================
+    // article_id取得
+    // =========================
+
     function getArticleId() {
-      const params = new URLSearchParams(location.search);
+      const params =
+        new URLSearchParams(location.search);
+
       return params.get("article_id") || "unknown";
     }
 
-    async function main() {
-      try {
-        show("LIFF初期化中...");
-        await liff.init({ liffId: LIFF_ID });
 
-        const articleId = getArticleId();
+    // =========================
+    // 友だち追加ボタン表示
+    // =========================
+
+    function showFriendButton() {
+
+      document.getElementById("friendArea").innerHTML = `
+        <div class="friend-btn">
+
+          <a href="${FRIEND_ADD_URL}">
+            <img
+              src="https://scdn.line-apps.com/n/line_add_friends/btn/ja.png"
+              alt="友だち追加"
+              height="50"
+              border="0">
+          </a>
+
+          <p>
+            友だち追加ボタンを押してください
+          </p>
+
+        </div>
+      `;
+    }
+
+
+    // =========================
+    // メイン処理
+    // =========================
+
+    async function main() {
+
+      try {
+
+        show("LIFF初期化中...");
+
+        await liff.init({
+          liffId: LIFF_ID
+        });
+
+        const articleId =
+          getArticleId();
+
+
+        // =====================
+        // LINEログイン
+        // =====================
 
         if (!liff.isLoggedIn()) {
+
           show("LINEログインへ移動します...");
+
           liff.login({
-            redirectUri: location.origin + location.pathname + "?article_id=" + articleId
+            redirectUri:
+              location.origin +
+              location.pathname +
+              "?article_id=" +
+              articleId
           });
+
           return;
         }
 
+
+        // =====================
+        // profile取得
+        // =====================
+
         show("プロフィール取得中...");
-        const profile = await liff.getProfile();
+
+        const profile =
+          await liff.getProfile();
+
+
+        // =====================
+        // GAS保存
+        // =====================
 
         show("保存中...");
 
         await fetch(GAS_URL, {
+
           method: "POST",
+
           mode: "no-cors",
+
           headers: {
             "Content-Type": "text/plain"
           },
+
           body: JSON.stringify({
+
             type: "article_source",
-            article_id: articleId,
-            line_user_id: profile.userId,
-            display_name: profile.displayName
+
+            article_id:
+              articleId,
+
+            line_user_id:
+              profile.userId,
+
+            display_name:
+              profile.displayName
+
           })
+
         });
 
-        show("保存完了。友だち追加へ移動します...");
 
-        setTimeout(() => {
-          liff.openWindow({
-            url: FRIEND_ADD_URL,
-            external: true
-          });
-        }, 800);
+        // =====================
+        // 完了
+        // =====================
+
+        show("保存完了！");
+
+        showFriendButton();
+
 
       } catch (err) {
-        show("エラー: " + err.message);
+
+        show(
+          "エラー: " + err.message
+        );
+
+        console.error(err);
       }
     }
 
+
+    // 実行
     main();
+
   </script>
+
 </body>
 </html>
