@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>LINE連携中</title>
+</head>
+<body>
+  <p id="status">LINE連携中...</p>
+  <pre id="debug"></pre>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+    const LIFF_ID = "2010275496-Wl17Ab7m";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzuhpQhlQzcjoogmT8Ce7_TIDOWV0n-w-HTDlxH_3mizJlmPnF42kDdkVbscjomIC7k/exec";
+    const FRIEND_ADD_URL = "https://line.me/R/ti/p/@848vrjhf";
+
+    function show(msg) {
+      document.getElementById("status").innerText = msg;
+      document.getElementById("debug").innerText += msg + "\n";
+    }
+
+    function getArticleId() {
+      const params = new URLSearchParams(location.search);
+      return params.get("article_id") || "unknown";
+    }
+
+    async function main() {
+      try {
+        show("LIFF初期化中...");
+        await liff.init({ liffId: LIFF_ID });
+
+        const articleId = getArticleId();
+
+        if (!liff.isLoggedIn()) {
+          show("LINEログインへ移動します...");
+          liff.login({
+            redirectUri: location.origin + location.pathname + "?article_id=" + articleId
+          });
+          return;
+        }
+
+        show("プロフィール取得中...");
+        const profile = await liff.getProfile();
+
+        show("保存中...");
+
+        await fetch(GAS_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "text/plain"
+          },
+          body: JSON.stringify({
+            type: "article_source",
+            article_id: articleId,
+            line_user_id: profile.userId,
+            display_name: profile.displayName
+          })
+        });
+
+        show("保存完了。友だち追加へ移動します...");
+
+        setTimeout(() => {
+          liff.openWindow({
+            url: FRIEND_ADD_URL,
+            external: true
+          });
+        }, 800);
+
+      } catch (err) {
+        show("エラー: " + err.message);
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>
