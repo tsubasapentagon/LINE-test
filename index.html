@@ -25,19 +25,12 @@
       margin-top: 20px;
       font-size: 12px;
     }
-
-    .friend-btn {
-      margin-top: 30px;
-    }
   </style>
 </head>
 
 <body>
 
   <p id="status">LINE連携中...</p>
-
-  <div id="friendArea"></div>
-
   <pre id="debug"></pre>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -69,24 +62,6 @@
         "?src=" +
         encodeURIComponent(src)
       );
-    }
-
-    function showFriendButton() {
-      document.getElementById("friendArea").innerHTML = `
-        <div class="friend-btn">
-          <a href="${FRIEND_ADD_URL}">
-            <img
-              src="https://scdn.line-apps.com/n/line_add_friends/btn/ja.png"
-              alt="友だち追加"
-              height="50"
-              border="0">
-          </a>
-
-          <p>
-            友だち追加後、もう一度このページを開いてください
-          </p>
-        </div>
-      `;
     }
 
     async function saveToGas(src, profile) {
@@ -159,25 +134,15 @@
           throw err;
         }
 
-        show("友だち追加状態を確認中...");
-
-        const friendship = await liff.getFriendship();
-
-        if (!friendship.friendFlag) {
-          show("まだ友だち追加されていません");
-          showFriendButton();
-          return;
-        }
-
-        show("保存中...");
+        show("流入元を保存中...");
 
         await saveToGas(src, profile);
 
-        show("保存完了！");
+        show("友だち追加画面へ移動します...");
 
-        document.getElementById("friendArea").innerHTML = `
-          <p>LINE連携が完了しました。</p>
-        `;
+        setTimeout(function() {
+          location.href = FRIEND_ADD_URL;
+        }, 1000);
 
       } catch (err) {
         show("エラー: " + err.message);
