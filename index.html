@@ -43,11 +43,6 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <script>
-
-    // =========================
-    // 設定
-    // =========================
-
     const LIFF_ID =
       "2010275496-Wl17Ab7m";
 
@@ -57,40 +52,19 @@
     const FRIEND_ADD_URL =
       "https://lin.ee/uXmNpaL";
 
-
-    // =========================
-    // ログ表示
-    // =========================
-
     function show(msg) {
       document.getElementById("status").innerText = msg;
-
-      document.getElementById("debug").innerText +=
-        msg + "\n";
+      document.getElementById("debug").innerText += msg + "\n";
     }
 
-
-    // =========================
-    // src取得
-    // =========================
-
     function getSrc() {
-      const params =
-        new URLSearchParams(location.search);
-
+      const params = new URLSearchParams(location.search);
       return params.get("src") || "unknown";
     }
 
-
-    // =========================
-    // 友だち追加ボタン表示
-    // =========================
-
     function showFriendButton() {
-
       document.getElementById("friendArea").innerHTML = `
         <div class="friend-btn">
-
           <a href="${FRIEND_ADD_URL}">
             <img
               src="https://scdn.line-apps.com/n/line_add_friends/btn/ja.png"
@@ -100,38 +74,39 @@
           </a>
 
           <p>
-            友だち追加ボタンを押してください
+            友だち追加後、もう一度このページを開いてください
           </p>
-
         </div>
       `;
     }
 
-
-    // =========================
-    // メイン処理
-    // =========================
+    async function saveToGas(src, profile) {
+      await fetch(GAS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain"
+        },
+        body: JSON.stringify({
+          type: "article_source",
+          src: src,
+          line_user_id: profile.userId,
+          display_name: profile.displayName
+        })
+      });
+    }
 
     async function main() {
-
       try {
-
         show("LIFF初期化中...");
 
         await liff.init({
           liffId: LIFF_ID
         });
 
-        const src =
-          getSrc();
-
-
-        // =====================
-        // LINEログイン
-        // =====================
+        const src = getSrc();
 
         if (!liff.isLoggedIn()) {
-
           show("LINEログインへ移動します...");
 
           liff.login({
@@ -139,80 +114,45 @@
               location.origin +
               location.pathname +
               "?src=" +
-              encodeURIComponent(src)
+              encodeURIComponent(src),
+
+            botPrompt: "aggressive"
           });
 
           return;
         }
 
-
-        // =====================
-        // profile取得
-        // =====================
-
         show("プロフィール取得中...");
 
-        const profile =
-          await liff.getProfile();
+        const profile = await liff.getProfile();
 
+        show("友だち追加状態を確認中...");
 
-        // =====================
-        // GAS保存
-        // =====================
+        const friendship = await liff.getFriendship();
+
+        if (!friendship.friendFlag) {
+          show("まだ友だち追加されていません");
+          showFriendButton();
+          return;
+        }
 
         show("保存中...");
 
-        await fetch(GAS_URL, {
-
-          method: "POST",
-
-          mode: "no-cors",
-
-          headers: {
-            "Content-Type": "text/plain"
-          },
-
-          body: JSON.stringify({
-
-            type: "article_source",
-
-            src:
-              src,
-
-            line_user_id:
-              profile.userId,
-
-            display_name:
-              profile.displayName
-
-          })
-
-        });
-
-
-        // =====================
-        // 完了
-        // =====================
+        await saveToGas(src, profile);
 
         show("保存完了！");
 
-        showFriendButton();
-
+        document.getElementById("friendArea").innerHTML = `
+          <p>LINE連携が完了しました。</p>
+        `;
 
       } catch (err) {
-
-        show(
-          "エラー: " + err.message
-        );
-
+        show("エラー: " + err.message);
         console.error(err);
       }
     }
 
-
-    // 実行
     main();
-
   </script>
 
 </body>
