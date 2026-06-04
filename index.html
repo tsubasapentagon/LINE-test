@@ -51,9 +51,22 @@
     }
 
     function getSrc() {
-      const params = new URLSearchParams(location.search);
-      return params.get("src") || "unknown";
-    }
+  const params = new URLSearchParams(location.search);
+
+  // 通常URLの ?src=xxx
+  const directSrc = params.get("src");
+  if (directSrc) return directSrc;
+
+  // LIFF URL経由の場合の liff.state
+  const liffState = params.get("liff.state");
+  if (liffState) {
+    const stateParams = new URLSearchParams(liffState);
+    const stateSrc = stateParams.get("src");
+    if (stateSrc) return stateSrc;
+  }
+
+  return "unknown";
+}
 
     function getRedirectUrl(src) {
       return (
