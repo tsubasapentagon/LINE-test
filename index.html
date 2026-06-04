@@ -81,23 +81,35 @@
     }
 
     function getSrc() {
-      const fromInitialUrl = extractSrcFromUrl(INITIAL_URL);
-      if (fromInitialUrl) {
-        sessionStorage.setItem("line_src", fromInitialUrl);
-        return fromInitialUrl;
-      }
+  const raw = location.href;
 
-      const fromCurrentUrl = extractSrcFromUrl(location.href);
-      if (fromCurrentUrl) {
-        sessionStorage.setItem("line_src", fromCurrentUrl);
-        return fromCurrentUrl;
-      }
+  show("現在URL: " + raw);
+  show("search: " + location.search);
 
-      const savedSrc = sessionStorage.getItem("line_src");
-      if (savedSrc) return savedSrc;
+  const params = new URLSearchParams(location.search);
 
-      return "unknown";
-    }
+  const directSrc = params.get("src");
+  if (directSrc) return directSrc;
+
+  const liffState = params.get("liff.state");
+  show("liff.state: " + liffState);
+
+  if (liffState) {
+    const decodedState = decodeURIComponent(liffState);
+    show("decoded liff.state: " + decodedState);
+
+    const stateParams = new URLSearchParams(
+      decodedState.startsWith("?")
+        ? decodedState
+        : "?" + decodedState
+    );
+
+    const stateSrc = stateParams.get("src");
+    if (stateSrc) return stateSrc;
+  }
+
+  return "unknown";
+}
 
     function getRedirectUrl(src) {
       return (
