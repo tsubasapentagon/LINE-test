@@ -51,16 +51,20 @@
     }
 
     function getSrc() {
-  const params = new URLSearchParams(location.search);
+  const url = new URL(location.href);
 
-  // 通常URLの ?src=xxx
-  const directSrc = params.get("src");
+  const directSrc = url.searchParams.get("src");
   if (directSrc) return directSrc;
 
-  // LIFF URL経由の場合の liff.state
-  const liffState = params.get("liff.state");
+  const liffState = url.searchParams.get("liff.state");
   if (liffState) {
-    const stateParams = new URLSearchParams(liffState);
+    const decodedState = decodeURIComponent(liffState);
+    const stateParams = new URLSearchParams(
+      decodedState.startsWith("?")
+        ? decodedState
+        : "?" + decodedState
+    );
+
     const stateSrc = stateParams.get("src");
     if (stateSrc) return stateSrc;
   }
