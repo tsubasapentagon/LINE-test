@@ -71,14 +71,14 @@
 
 
     // =========================
-    // article_id取得
+    // src取得
     // =========================
 
-    function getArticleId() {
+    function getSrc() {
       const params =
         new URLSearchParams(location.search);
 
-      return params.get("article_id") || "unknown";
+      return params.get("src") || "unknown";
     }
 
 
@@ -122,8 +122,8 @@
           liffId: LIFF_ID
         });
 
-        const articleId =
-          getArticleId();
+        const src =
+          getSrc();
 
 
         // =====================
@@ -138,8 +138,8 @@
             redirectUri:
               location.origin +
               location.pathname +
-              "?article_id=" +
-              articleId
+              "?src=" +
+              encodeURIComponent(src)
           });
 
           return;
@@ -176,8 +176,8 @@
 
             type: "article_source",
 
-            article_id:
-              articleId,
+            src:
+              src,
 
             line_user_id:
               profile.userId,
