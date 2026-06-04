@@ -36,6 +36,8 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <script>
+    const INITIAL_URL = location.href;
+
     const LIFF_ID =
       "2010275496-Wl17Ab7m";
 
@@ -50,27 +52,52 @@
       document.getElementById("debug").innerText += msg + "\n";
     }
 
+    function extractSrcFromUrl(urlText) {
+      try {
+        const url = new URL(urlText);
+
+        const directSrc = url.searchParams.get("src");
+        if (directSrc) return directSrc;
+
+        const liffState = url.searchParams.get("liff.state");
+        if (liffState) {
+          const decodedState = decodeURIComponent(liffState);
+
+          const stateParams = new URLSearchParams(
+            decodedState.startsWith("?")
+              ? decodedState
+              : "?" + decodedState
+          );
+
+          const stateSrc = stateParams.get("src");
+          if (stateSrc) return stateSrc;
+        }
+
+      } catch (e) {
+        console.warn(e);
+      }
+
+      return "";
+    }
+
     function getSrc() {
-  const url = new URL(location.href);
+      const fromInitialUrl = extractSrcFromUrl(INITIAL_URL);
+      if (fromInitialUrl) {
+        sessionStorage.setItem("line_src", fromInitialUrl);
+        return fromInitialUrl;
+      }
 
-  const directSrc = url.searchParams.get("src");
-  if (directSrc) return directSrc;
+      const fromCurrentUrl = extractSrcFromUrl(location.href);
+      if (fromCurrentUrl) {
+        sessionStorage.setItem("line_src", fromCurrentUrl);
+        return fromCurrentUrl;
+      }
 
-  const liffState = url.searchParams.get("liff.state");
-  if (liffState) {
-    const decodedState = decodeURIComponent(liffState);
-    const stateParams = new URLSearchParams(
-      decodedState.startsWith("?")
-        ? decodedState
-        : "?" + decodedState
-    );
+      const savedSrc = sessionStorage.getItem("line_src");
+      if (savedSrc) return savedSrc;
 
-    const stateSrc = stateParams.get("src");
-    if (stateSrc) return stateSrc;
-  }
-
-  return "unknown";
-}
+      return "unknown";
+    }
 
     function getRedirectUrl(src) {
       return (
@@ -115,13 +142,14 @@
 
     async function main() {
       try {
+        const src = getSrc();
+
+        show("取得src: " + src);
         show("LIFF初期化中...");
 
         await liff.init({
           liffId: LIFF_ID
         });
-
-        const src = getSrc();
 
         if (!liff.isLoggedIn()) {
           show("LINEログインへ移動します...");
